@@ -9,6 +9,7 @@
 import { postClassifierRequest } from "@earendil-works/pi-ai/api/classifier-shared";
 import { isModelType } from "@earendil-works/pi-ai/models";
 import { openaiProvider } from "@earendil-works/pi-ai/providers/openai";
+import { createOpenAIReadiness } from "./readiness.js";
 const LABEL = "[OI] Decisions";
 /** Cloudflare in front of api.openai.com answers 504 on very large inputs; retrying hits it again. */
 const NO_RETRY_STATUSES = [504];
@@ -162,29 +163,21 @@ function parseAnswers(body, request, model) {
  */
 export function createOpenAIDecisions(baseUrl, models, warn = () => { }) {
     const catalog = classifierModels(baseUrl, models, warn);
-    const openaiHosted = new URL(baseUrl).hostname === "api.openai.com";
-    let configured = !openaiHosted;
-    let failed;
-    function readiness() {
-        if (!configured)
-            return { status: "not_configured" };
-        if (failed !== undefined)
-            return { status: "degraded", detail: failed };
-        return { status: "ready" };
-    }
+    // The shared three-state tracker (spec §3): every kind reports readiness
+    // the same way, including the display-only gap before the first call.
+    const readiness = createOpenAIReadiness(baseUrl);
     return {
         id: "openai",
         label: "OpenAI",
         credentialEnv: "OPENAI_API_KEY",
         models: [...catalog.keys()].map((id) => ({ id })),
-        readiness,
+        readiness: () => readiness.readiness(),
         async evaluate(request, ctx) {
             const model = catalog.get(ctx.model);
             if (model === undefined)
                 throw new Error(`${LABEL} has no model "${ctx.model}"`);
-            if (ctx.credential !== undefined)
-                configured = true;
-            if (ctx.credential === undefined && openaiHosted) {
+            readiness.noteCredential(ctx.credential);
+            if (readiness.publicEndpoint && ctx.credential === undefined) {
                 throw new Error("[OI] Decisions: no API key (auth.json openai or OPENAI_API_KEY)");
             }
             try {
@@ -194,11 +187,11 @@ export function createOpenAIDecisions(baseUrl, models, warn = () => { }) {
                     questions: Object.entries(request.questions).map(([id, question]) => wireQuestion(id, question)),
                 }, { apiKey: ctx.credential ?? "", signal: ctx.signal }, NO_RETRY_STATUSES);
                 const answers = parseAnswers(body, request, model);
-                failed = undefined;
+                readiness.noteSuccess();
                 return answers;
             }
             catch (error) {
-                failed = error instanceof Error ? error.message : String(error);
+                readiness.noteFailure(error instanceof Error ? error.message : String(error));
                 throw error;
             }
         },

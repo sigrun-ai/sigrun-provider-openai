@@ -44,6 +44,21 @@ describe("provider-openai chat", () => {
 		expect(provider.getModels().length).toBeGreaterThan(0);
 	});
 
+	it("carries the shared readiness tracker, fed by auth resolution", async () => {
+		const defaults = await createOpenAIProvider(fakeHost({}));
+		const contribution = defaults.providers[0]!;
+		// No call has carried a credential yet, and the default endpoint is the
+		// vendor's own public API: not_configured (the shared display-only gap).
+		expect(contribution.readiness?.()).toEqual({ status: "not_configured" });
+		await contribution.provider.auth.apiKey!.resolve(authInput);
+		expect(contribution.readiness?.()).toEqual({ status: "ready" });
+		// A custom endpoint needs no credential at all: ready from the start.
+		const custom = await createOpenAIProvider(
+			fakeHost({ baseUrl: "http://127.0.0.1:11434/v1" }),
+		);
+		expect(custom.providers[0]!.readiness?.()).toEqual({ status: "ready" });
+	});
+
 	it("baseUrl applies to chat", async () => {
 		const custom = await createOpenAIProvider(
 			fakeHost({ baseUrl: "https://openai.example.invalid/v1" }),

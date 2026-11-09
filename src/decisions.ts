@@ -13,8 +13,8 @@ import type { ClassifierApi, ClassifierModel } from "@earendil-works/pi-ai";
 import type {
 	DecisionContext,
 	DecisionProviderContribution,
-	ProviderReadiness,
 } from "@sigrun/sigrun/extension";
+import { createOpenAIReadiness } from "./readiness.js";
 
 /**
  * Local mirrors of the `@sigrun/shared/decisions` leaf types (that package is
@@ -246,27 +246,21 @@ export function createOpenAIDecisions(
 	warn: (message: string) => void = () => {},
 ): DecisionProviderContribution {
 	const catalog = classifierModels(baseUrl, models, warn);
-	const openaiHosted = new URL(baseUrl).hostname === "api.openai.com";
-	let configured = !openaiHosted;
-	let failed: string | undefined;
-
-	function readiness(): ProviderReadiness {
-		if (!configured) return { status: "not_configured" };
-		if (failed !== undefined) return { status: "degraded", detail: failed };
-		return { status: "ready" };
-	}
+	// The shared three-state tracker (spec §3): every kind reports readiness
+	// the same way, including the display-only gap before the first call.
+	const readiness = createOpenAIReadiness(baseUrl);
 
 	return {
 		id: "openai",
 		label: "OpenAI",
 		credentialEnv: "OPENAI_API_KEY",
 		models: [...catalog.keys()].map((id) => ({ id })),
-		readiness,
+		readiness: () => readiness.readiness(),
 		async evaluate(request: DecisionRequest, ctx: DecisionContext): Promise<DecisionAnswers> {
 			const model = catalog.get(ctx.model);
 			if (model === undefined) throw new Error(`${LABEL} has no model "${ctx.model}"`);
-			if (ctx.credential !== undefined) configured = true;
-			if (ctx.credential === undefined && openaiHosted) {
+			readiness.noteCredential(ctx.credential);
+			if (readiness.publicEndpoint && ctx.credential === undefined) {
 				throw new Error("[OI] Decisions: no API key (auth.json openai or OPENAI_API_KEY)");
 			}
 			try {
@@ -283,10 +277,10 @@ export function createOpenAIDecisions(
 					NO_RETRY_STATUSES,
 				);
 				const answers = parseAnswers(body, request, model);
-				failed = undefined;
+				readiness.noteSuccess();
 				return answers;
 			} catch (error) {
-				failed = error instanceof Error ? error.message : String(error);
+				readiness.noteFailure(error instanceof Error ? error.message : String(error));
 				throw error;
 			}
 		},

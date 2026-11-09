@@ -1,8 +1,11 @@
 import { createOpenAIChat } from "./chat.js";
 import { createOpenAIDecisions } from "./decisions.js";
+import { createOpenAIEmbeddings } from "./embeddings.js";
 import { parseSettings } from "./settings.js";
 export { createOpenAIChat } from "./chat.js";
 export { createOpenAIDecisions } from "./decisions.js";
+export { createOpenAIEmbeddings, EMBEDDING_REQUEST_TOKEN_BUDGET, isLocalHost, } from "./embeddings.js";
+export { createOpenAIReadiness } from "./readiness.js";
 export { DEFAULT_DECISION_MODELS, DEFAULT_EMBEDDING_MAX_BATCH, DEFAULT_EMBEDDING_MODELS, DEFAULT_OPENAI_BASE_URL, parseSettings, } from "./settings.js";
 /** Arity 1: sigrun supplies the scoped host; settings are read once at load. */
 export default async function createOpenAIProvider(host) {
@@ -13,6 +16,11 @@ export default async function createOpenAIProvider(host) {
         providers: settings.chat.enabled ? [createOpenAIChat(settings.baseUrl)] : [],
         ...(settings.decisions.enabled
             ? { decisionProviders: [createOpenAIDecisions(settings.baseUrl, settings.decisions.models, warn)] }
+            : {}),
+        ...(settings.embeddings.enabled
+            ? {
+                embeddingProviders: [createOpenAIEmbeddings(settings.baseUrl, settings.embeddings.models, settings.embeddings.maxBatch)],
+            }
             : {}),
     };
 }
