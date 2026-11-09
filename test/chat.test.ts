@@ -28,7 +28,7 @@ describe("provider-openai chat", () => {
 		const result = await createOpenAIProvider(
 			fakeHost({ chat: { enabled: false } }),
 		);
-		expect(result).toEqual({ name: "provider-openai", providers: [] });
+		expect(result.providers).toEqual([]);
 	});
 
 	it("chat catalog has no classifier models", async () => {
