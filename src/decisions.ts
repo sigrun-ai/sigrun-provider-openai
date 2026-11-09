@@ -2,8 +2,8 @@
  * The [OI] Decisions API as a sigrun decision provider. pi-ai's own
  * `classify` drops the per-level probabilities of score answers and
  * never throws, so this module builds the request body itself, posts it
- * with pi-ai's transport (`postClassifierRequest` — retries, usage
- * accounting), and parses the raw answers. The predicate-instructions
+ * with pi-ai's transport (`postClassifierRequest` — retries and bearer auth;
+ * usage and answers are parsed locally), and parses the raw answers. The predicate-instructions
  * wording mirrors pi-ai's openai-decisions client.
  */
 import { postClassifierRequest } from "@earendil-works/pi-ai/api/classifier-shared";
