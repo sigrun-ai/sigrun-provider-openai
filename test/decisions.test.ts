@@ -115,7 +115,7 @@ describe("provider-openai decisions", () => {
 		const fake = await fakeDecisionsServer();
 		const contribution = await contributionFor({ baseUrl: fake.baseUrl });
 		expect(contribution.id).toBe("openai");
-		expect(contribution.label).toBe("[OI]");
+		expect(contribution.label).toBe("OpenAI");
 		expect(contribution.credentialEnv).toBe("OPENAI_API_KEY");
 		expect(contribution.models).toEqual([{ id: "gpt-6-luna" }]);
 

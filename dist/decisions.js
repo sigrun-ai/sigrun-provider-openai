@@ -174,7 +174,7 @@ export function createOpenAIDecisions(baseUrl, models, warn = () => { }) {
     }
     return {
         id: "openai",
-        label: "[OI]",
+        label: "OpenAI",
         credentialEnv: "OPENAI_API_KEY",
         models: [...catalog.keys()].map((id) => ({ id })),
         readiness,
