@@ -244,6 +244,31 @@ describe("provider-openai embeddings", () => {
 		]);
 	});
 
+	it("a caller abort is a cancellation, not a provider failure", async () => {
+		const server = createServer((req, res) => {
+			req.on("data", () => {});
+			// Hold the response open: the caller abandons the request.
+			req.on("end", () => {
+				res.on("close", () => {});
+			});
+		});
+		await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+		servers.push(server);
+		const { port } = server.address() as AddressInfo;
+		const contribution = await contributionFor({ baseUrl: `http://127.0.0.1:${port}/v1` });
+		expect(contribution.readiness?.()).toEqual({ status: "ready" });
+		const controller = new AbortController();
+		const pending = contribution.embed(
+			{ model: "text-embedding-3-small", input: ["000"] },
+			{ credential: KEY, signal: controller.signal },
+		);
+		setTimeout(() => controller.abort(), 20);
+		const error = await pending.then(() => undefined, (thrown: unknown) => thrown);
+		expect((error as { name?: string }).name).toBe("AbortError");
+		// A cancellation says nothing about the provider's health.
+		expect(contribution.readiness?.()).toEqual({ status: "ready" });
+	});
+
 	it("the incoming batch size splits requests too", async () => {
 		const fake = await fakeEmbeddingsServer();
 		const contribution = await contributionFor({
@@ -304,6 +329,15 @@ describe("provider-openai embeddings", () => {
 		await expect(
 			contribution.embed({ model: "text-embedding-3-small", input: ["000", "001"] }, ctx()),
 		).rejects.toThrow(/1 vectors for 2 inputs/u);
+	});
+
+	it("a transport failure still degrades readiness", async () => {
+		// A port nothing listens on: ECONNREFUSED, a real provider failure.
+		const dead = await contributionFor({ baseUrl: "http://127.0.0.1:1/v1" });
+		await expect(
+			dead.embed({ model: "text-embedding-3-small", input: ["000"] }, ctx()),
+		).rejects.toThrow();
+		expect(dead.readiness?.().status).toBe("degraded");
 	});
 
 	it("a failed call degrades readiness until a success", async () => {

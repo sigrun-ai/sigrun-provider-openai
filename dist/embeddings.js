@@ -78,6 +78,20 @@ export function isLocalHost(hostname) {
         return isLocalIPv6(host);
     return isLocalIPv4(host);
 }
+/**
+ * Whether a thrown value is a caller cancellation rather than a provider
+ * failure. Node's `fetch` rejects with a `DOMException` named `AbortError`;
+ * the abort flag covers an implementation that rejects some other way after
+ * the signal fired. A cancellation says nothing about the endpoint's health,
+ * so it must not degrade readiness.
+ */
+function isAbort(error, signal) {
+    if (signal.aborted)
+        return true;
+    return (typeof error === "object" &&
+        error !== null &&
+        error.name === "AbortError");
+}
 /** The provider's estimated token count for one input text (never below 1). */
 function estimateTokens(text) {
     return Math.max(1, Math.ceil(text.length / CHARS_PER_TOKEN));
@@ -210,7 +224,12 @@ export function createOpenAIEmbeddings(baseUrl, models, maxBatch) {
                 return { vectors };
             }
             catch (error) {
-                readiness.noteFailure(error instanceof Error ? error.message : String(error));
+                // A caller abort is a cancellation, not a failure: the tracker keeps
+                // reporting the provider's real health. Core maps its own deadline
+                // abort to `timeout`, which likewise says nothing about the endpoint.
+                if (!isAbort(error, ctx.signal)) {
+                    readiness.noteFailure(error instanceof Error ? error.message : String(error));
+                }
                 throw error;
             }
         },
