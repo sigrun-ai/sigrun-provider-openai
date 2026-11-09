@@ -18,9 +18,9 @@ catalog, a decision provider, and an embedding provider — each switchable in
 - `src/host.ts` — structural host slice (the async scoped settings store).
 - `src/settings.ts` — parser for `settings/provider-openai.json`; unknown or
   malformed values warn and fall back per key.
-- `src/chat.ts` — pi-ai [OI] provider wrapper: chat-only catalog and per-request
+- `src/chat.ts` — pi-ai OpenAI provider wrapper: chat-only catalog and per-request
   base URL applied through resolved auth.
-- `src/decisions.ts` — the decision provider: builds the [OI] Decisions request
+- `src/decisions.ts` — the decision provider: builds the OpenAI Decisions request
   body and posts it through pi-ai's transport, parsing answers locally.
 - `src/embeddings.ts` — the embedding provider: `POST <baseUrl>/embeddings`,
   split by input count and by an estimated token budget, index-ordered vectors,

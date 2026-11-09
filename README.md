@@ -1,7 +1,7 @@
 # @sigrun/provider-openai
 
-Sigrun extension package for [OI]-compatible providers. Version 0.1.0
-contributes three provider kinds under the provider id `openai`: pi-ai's [OI]
+Sigrun extension package for OpenAI-compatible providers. Version 0.1.0
+contributes three provider kinds under the provider id `openai`: pi-ai's OpenAI
 chat catalog through the Responses API (classifier models kept out of the chat
 catalog), decision providers over `POST /v1/decisions`, and embedding providers
 over `POST /v1/embeddings`.
@@ -34,8 +34,8 @@ when the extension loads; restart sigrun after editing it.
 
 | Setting | Default | Purpose |
 | --- | --- | --- |
-| `baseUrl` | `https://api.openai.com/v1` | [OI]-compatible API root |
-| `chat.enabled` | `true` | Contribute [OI] chat models |
+| `baseUrl` | `https://api.openai.com/v1` | OpenAI-compatible API root |
+| `chat.enabled` | `true` | Contribute OpenAI chat models |
 | `decisions.enabled` | `true` | Contribute the decision provider |
 | `decisions.models` | `["gpt-6-luna"]` | Decision model ids |
 | `embeddings.enabled` | `true` | Contribute the embedding provider |
@@ -44,11 +44,11 @@ when the extension loads; restart sigrun after editing it.
 
 Unknown or malformed settings warn and fall back per key. The default `baseUrl`
 is passed through unchanged; do not add or remove a trailing slash when using
-pi-ai's [OI] subscription-auth behavior.
+pi-ai's OpenAI subscription-auth behavior.
 
 ## Provider kinds
 
-- **Chat:** pi-ai's [OI] Responses provider, model catalog included.
+- **Chat:** pi-ai's OpenAI Responses provider, model catalog included.
 - **Decisions:** one provider per configured model, posted to
   `POST <baseUrl>/decisions`.
 - **Embeddings:** one provider with every configured model. Each request is

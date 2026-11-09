@@ -1,4 +1,4 @@
-/** @sigrun/provider-openai — provider-only [OI] chat, decision and embedding contributions. */
+/** @sigrun/provider-openai — provider-only OpenAI chat, decision and embedding contributions. */
 import type { DecisionProviderContribution, EmbeddingProviderContribution, ProviderContribution } from "@sigrun/sigrun/extension";
 import type { OpenAIProviderHost } from "./host.js";
 export { createOpenAIChat } from "./chat.js";

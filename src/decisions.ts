@@ -1,5 +1,5 @@
 /**
- * The [OI] Decisions API as a sigrun decision provider. pi-ai's own
+ * The OpenAI Decisions API as a sigrun decision provider. pi-ai's own
  * `classify` drops the per-level probabilities of score answers and
  * never throws, so this module builds the request body itself, posts it
  * with pi-ai's transport (`postClassifierRequest` — retries and bearer auth;
@@ -73,7 +73,7 @@ interface DecisionAnswers {
 	readonly model?: string;
 }
 
-const LABEL = "[OI] Decisions";
+const LABEL = "OpenAI Decisions";
 /** Cloudflare in front of api.openai.com answers 504 on very large inputs; retrying hits it again. */
 const NO_RETRY_STATUSES = [504];
 
@@ -104,7 +104,7 @@ function classifierModels(
 		if (byId.has(id)) {
 			usable.push(id);
 		} else {
-			warn(`provider-openai: no [OI] Decisions classifier catalog entry for "${id}"; dropping it`);
+			warn(`provider-openai: no OpenAI Decisions classifier catalog entry for "${id}"; dropping it`);
 		}
 	}
 	const ids = usable.length > 0 ? usable : catalog.map((model) => model.id);
@@ -235,7 +235,7 @@ function parseAnswers(body: unknown, request: DecisionRequest, model: Classifier
 
 /**
  * The decision-provider contribution. Readiness is `not_configured` when the
- * last call carried no credential and the endpoint is [OI]'s own host (a
+ * last call carried no credential and the endpoint is OpenAI's own host (a
  * keyless custom endpoint stays ready); a failed call marks the tracker
  * `degraded` until a success. `evaluate` throws for transport and answer
  * failures; core maps a throw to `failed`.
@@ -261,7 +261,7 @@ export function createOpenAIDecisions(
 			if (model === undefined) throw new Error(`${LABEL} has no model "${ctx.model}"`);
 			readiness.noteCredential(ctx.credential);
 			if (readiness.publicEndpoint && ctx.credential === undefined) {
-				throw new Error("[OI] Decisions: no API key (auth.json openai or OPENAI_API_KEY)");
+				throw new Error("OpenAI Decisions: no API key (auth.json openai or OPENAI_API_KEY)");
 			}
 			try {
 				const body = await postClassifierRequest(

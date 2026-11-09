@@ -1,6 +1,6 @@
 import type { ProviderContribution } from "@sigrun/sigrun/extension";
 /**
- * pi-ai's [OI] provider with a chat-only catalog and a per-request base URL.
+ * pi-ai's OpenAI provider with a chat-only catalog and a per-request base URL.
  *
  * The contribution carries the plugin's shared readiness tracker, fed by
  * the auth resolution pi-ai performs before every request: a resolved

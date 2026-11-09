@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release: [OI] chat models through pi-ai, scoped settings, and a configurable API base URL.
+- Initial release: OpenAI chat models through pi-ai, scoped settings, and a configurable API base URL.
 - The decision provider kind: one provider per configured model over `POST /v1/decisions`.
 - The embedding provider kind: every configured model over `POST /v1/embeddings`, split by input count and by an estimated token budget, with a per-model `local` report derived from `baseUrl`'s host.
 - One shared readiness tracker across the three kinds.
