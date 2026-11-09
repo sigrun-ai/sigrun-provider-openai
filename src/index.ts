@@ -27,15 +27,13 @@ export interface OpenAIProviderResult {
 export default async function createOpenAIProvider(
 	host: OpenAIProviderHost,
 ): Promise<OpenAIProviderResult> {
-	const settings = parseSettings(
-		await host.stores.settings.get(),
-		(message) => console.warn(message),
-	);
+	const warn = (message: string) => console.warn(message);
+	const settings = parseSettings(await host.stores.settings.get(), warn);
 	return {
 		name: "provider-openai",
 		providers: settings.chat.enabled ? [createOpenAIChat(settings.baseUrl)] : [],
 		...(settings.decisions.enabled
-			? { decisionProviders: [createOpenAIDecisions(settings.baseUrl, settings.decisions.models)] }
+			? { decisionProviders: [createOpenAIDecisions(settings.baseUrl, settings.decisions.models, warn)] }
 			: {}),
 	};
 }

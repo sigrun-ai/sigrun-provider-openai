@@ -101,8 +101,7 @@ async function contributionFor(
 	return contributions[0]!;
 }
 
-function ctx(baseUrl: string): DecisionContext {
-	void baseUrl;
+function ctx(): DecisionContext {
 	return {
 		model: "gpt-6-luna",
 		credential: "sk-test",
@@ -124,7 +123,7 @@ describe("provider-openai decisions", () => {
 			state: { note: "hello" },
 			questions: { q1: { type: "noul", instructions: "Is the note friendly?" } },
 		};
-		const result = await contribution.evaluate(request, ctx(fake.baseUrl));
+		const result = await contribution.evaluate(request, ctx());
 		const wireQuestion = (fake.requests[0]!.body.questions as ReadonlyArray<Record<string, unknown>>)[0]!;
 		expect(wireQuestion).toEqual({
 			type: "predicate",
@@ -148,7 +147,7 @@ describe("provider-openai decisions", () => {
 					criteria: { billing: "Charges and payments", other: null },
 				},
 			},
-		}, ctx(fake.baseUrl));
+		}, ctx());
 		const wireQuestion = (fake.requests[0]!.body.questions as ReadonlyArray<Record<string, unknown>>)[0]!;
 		expect(wireQuestion).toEqual({
 			type: "choice",
@@ -179,7 +178,7 @@ describe("provider-openai decisions", () => {
 					criteria: ["neutral", "angry"],
 				},
 			},
-		}, ctx(fake.baseUrl));
+		}, ctx());
 		const wireQuestion = (fake.requests[0]!.body.questions as ReadonlyArray<Record<string, unknown>>)[0]!;
 		expect(wireQuestion).toEqual({
 			type: "score",
@@ -217,7 +216,7 @@ describe("provider-openai decisions", () => {
 					criteria: ["low", { label: "high" }],
 				},
 			},
-		}, ctx(fake.baseUrl));
+		}, ctx());
 		const questions = fake.requests[0]!.body.questions as ReadonlyArray<Record<string, unknown>>;
 		expect(questions[0]).toEqual({ type: "predicate", name: "absent", instructions: "absent" });
 		expect(questions[1]).toEqual({
@@ -255,7 +254,7 @@ describe("provider-openai decisions", () => {
 					criteria: { true: "the work is complete", false: "work remains" },
 				},
 			},
-		}, ctx(fake.baseUrl));
+		}, ctx());
 		const wireQuestion = (fake.requests[0]!.body.questions as ReadonlyArray<Record<string, unknown>>)[0]!;
 		expect(wireQuestion.instructions).toBe(
 			"Is it done?\n\nTrue means: the work is complete\nFalse means: work remains",
@@ -268,14 +267,14 @@ describe("provider-openai decisions", () => {
 		await contribution.evaluate({
 			state: "plain text",
 			questions: { q: { type: "noul" } },
-		}, ctx(fake.baseUrl));
+		}, ctx());
 		expect(fake.requests[0]!.body.input).toBe("plain text");
 
 		const state = { nested: { list: [1, "two"] } };
 		await contribution.evaluate({
 			state,
 			questions: { q: { type: "noul" } },
-		}, ctx(fake.baseUrl));
+		}, ctx());
 		expect(fake.requests[1]!.body.input).toBe(JSON.stringify(state));
 	});
 
@@ -304,7 +303,46 @@ describe("provider-openai decisions", () => {
 		await expect(contribution.evaluate({
 			state: "x",
 			questions: { dangerous: { type: "noul", instructions: "Judge" } },
-		}, ctx(""))).rejects.toThrow("openai refused question dangerous");
+		}, ctx())).rejects.toThrow("openai refused question dangerous");
+	});
+
+	it("unknown decisions.models ids degrade with a warning and keep chat", async () => {
+		const warnings: string[] = [];
+		const host: OpenAIProviderHost = {
+			stores: {
+				settings: {
+					get: async () => ({
+						decisions: { models: ["not-a-classifier-model"] },
+					}),
+				},
+			},
+		};
+		const originalWarn = console.warn;
+		console.warn = (message: string) => warnings.push(message);
+		try {
+			const result = await createOpenAIProvider(host);
+			expect(result.providers).toHaveLength(1);
+			const contribution = result.decisionProviders?.[0];
+			expect(contribution?.models).toEqual([{ id: "gpt-6-luna" }]);
+			expect(warnings.some((message) => message.includes("not-a-classifier-model"))).toBe(true);
+			expect(warnings.some((message) => message.includes("no usable classifier model"))).toBe(true);
+		} finally {
+			console.warn = originalWarn;
+		}
+	});
+
+	it("malformed baseUrl warns and falls back to the default", async () => {
+		const warnings: string[] = [];
+		const originalWarn = console.warn;
+		console.warn = (message: string) => warnings.push(message);
+		try {
+			const result = await createOpenAIProvider(fakeHost({ baseUrl: "not a url" }));
+			expect(result.providers).toHaveLength(1);
+			expect(result.decisionProviders).toHaveLength(1);
+			expect(warnings.some((message) => message.includes("baseUrl is not a valid URL"))).toBe(true);
+		} finally {
+			console.warn = originalWarn;
+		}
 	});
 
 	it("decisions disabled contributes nothing", async () => {

@@ -77,11 +77,15 @@ function decisionModels(raw: Section, warn: Warn): readonly string[] {
 	if (models.length !== raw.models.length) {
 		warn("provider-openai: settings.decisions.models dropped entries that were not non-empty strings");
 	}
-	if (models.length === 0) {
+	const deduped = [...new Set(models)];
+	if (deduped.length !== models.length) {
+		warn("provider-openai: settings.decisions.models dropped duplicate entries");
+	}
+	if (deduped.length === 0) {
 		warn("provider-openai: settings.decisions.models left no usable entry; using the default");
 		return [...DEFAULT_DECISION_MODELS];
 	}
-	return models;
+	return deduped;
 }
 
 function embeddingModels(raw: Section, warn: Warn): readonly OpenAIEmbeddingModelSettings[] {
@@ -124,7 +128,12 @@ export function parseSettings(raw: Record<string, unknown>, warn: Warn): OpenAIP
 	let baseUrl = DEFAULT_OPENAI_BASE_URL;
 	if (raw.baseUrl !== undefined) {
 		if (typeof raw.baseUrl === "string" && raw.baseUrl.length > 0) {
-			baseUrl = raw.baseUrl;
+			try {
+				new URL(raw.baseUrl);
+				baseUrl = raw.baseUrl;
+			} catch {
+				warn("provider-openai: settings.baseUrl is not a valid URL; using the default");
+			}
 		} else {
 			warn("provider-openai: settings.baseUrl must be a non-empty string; using the default");
 		}

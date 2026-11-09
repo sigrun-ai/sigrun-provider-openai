@@ -28,6 +28,7 @@ describe("provider-openai chat", () => {
 		const result = await createOpenAIProvider(
 			fakeHost({ chat: { enabled: false } }),
 		);
+		expect(result.name).toBe("provider-openai");
 		expect(result.providers).toEqual([]);
 	});
 

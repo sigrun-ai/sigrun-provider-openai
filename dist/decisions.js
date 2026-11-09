@@ -19,19 +19,28 @@ function text(value) {
     return typeof value === "string" ? value : JSON.stringify(value);
 }
 /** One classifier catalog entry per configured model, with the settings baseUrl laid over it. */
-function classifierModels(baseUrl, models) {
+function classifierModels(baseUrl, models, warn) {
     const base = openaiProvider();
     const catalog = (base.getAllModels?.() ?? base.getModels()).filter((model) => isModelType(model, "classifier") && model.api === "openai-decisions");
     const byId = new Map(catalog.map((model) => [model.id, model]));
-    const result = new Map();
+    const usable = [];
     for (const id of models) {
-        const model = byId.get(id);
-        if (model === undefined) {
-            throw new Error(`provider-openai: no [OI] Decisions classifier catalog entry for "${id}"`);
+        if (byId.has(id)) {
+            usable.push(id);
         }
+        else {
+            warn(`provider-openai: no [OI] Decisions classifier catalog entry for "${id}"; dropping it`);
+        }
+    }
+    const ids = usable.length > 0 ? usable : catalog.map((model) => model.id);
+    if (usable.length === 0) {
+        warn("provider-openai: settings.decisions.models named no usable classifier model; using the default");
+    }
+    const result = new Map();
+    for (const id of ids) {
         // postClassifierRequest posts to an explicit URL built like pi-ai's classify:
         // new URL("decisions", `${baseUrl without trailing slashes}/`).
-        result.set(id, { ...model, baseUrl });
+        result.set(id, { ...byId.get(id), baseUrl });
     }
     return result;
 }
@@ -151,8 +160,8 @@ function parseAnswers(body, request, model) {
  * `degraded` until a success. `evaluate` throws for transport and answer
  * failures; core maps a throw to `failed`.
  */
-export function createOpenAIDecisions(baseUrl, models) {
-    const catalog = classifierModels(baseUrl, models);
+export function createOpenAIDecisions(baseUrl, models, warn = () => { }) {
+    const catalog = classifierModels(baseUrl, models, warn);
     const openaiHosted = new URL(baseUrl).hostname === "api.openai.com";
     let configured = !openaiHosted;
     let failed;
@@ -167,10 +176,12 @@ export function createOpenAIDecisions(baseUrl, models) {
         id: "openai",
         label: "[OI]",
         credentialEnv: "OPENAI_API_KEY",
-        models: models.map((id) => ({ id })),
+        models: [...catalog.keys()].map((id) => ({ id })),
         readiness,
         async evaluate(request, ctx) {
-            const model = catalog.get(ctx.model) ?? catalog.values().next().value;
+            const model = catalog.get(ctx.model);
+            if (model === undefined)
+                throw new Error(`${LABEL} has no model "${ctx.model}"`);
             if (ctx.credential !== undefined)
                 configured = true;
             if (ctx.credential === undefined && openaiHosted) {

@@ -82,6 +82,23 @@ describe("parseSettings", () => {
 		expect(warnings.length).toBeGreaterThanOrEqual(7);
 	});
 
+	it("malformed baseUrl warns and falls back to the default", () => {
+		const warnings: string[] = [];
+		const settings = parseSettings({ baseUrl: "not a url" }, (message) => warnings.push(message));
+		expect(settings.baseUrl).toBe(DEFAULT_OPENAI_BASE_URL);
+		expect(warnings).toEqual(["provider-openai: settings.baseUrl is not a valid URL; using the default"]);
+	});
+
+	it("duplicate decisions.models entries are deduped with a warning", () => {
+		const warnings: string[] = [];
+		const settings = parseSettings(
+			{ decisions: { models: ["gpt-6-luna", "gpt-6-luna", "gpt-other"] } },
+			(message) => warnings.push(message),
+		);
+		expect(settings.decisions.models).toEqual(["gpt-6-luna", "gpt-other"]);
+		expect(warnings).toEqual(["provider-openai: settings.decisions.models dropped duplicate entries"]);
+	});
+
 	it("a settings section with the wrong shape uses its defaults", () => {
 		const warnings: string[] = [];
 		const settings = parseSettings(
