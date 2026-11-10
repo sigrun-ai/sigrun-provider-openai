@@ -7,10 +7,8 @@ import type { OpenAIProviderHost } from "../src/host.js";
 
 function fakeHost(settings: Record<string, unknown>): OpenAIProviderHost {
 	return {
-		stores: {
-			settings: {
-				get: async () => settings,
-			},
+		settings: {
+			declare: () => ({ get: async () => settings }),
 		},
 	};
 }
@@ -309,12 +307,12 @@ describe("provider-openai decisions", () => {
 	it("unknown decisions.models ids degrade with a warning and keep chat", async () => {
 		const warnings: string[] = [];
 		const host: OpenAIProviderHost = {
-			stores: {
-				settings: {
+			settings: {
+				declare: () => ({
 					get: async () => ({
 						decisions: { models: ["not-a-classifier-model"] },
 					}),
-				},
+				}),
 			},
 		};
 		const originalWarn = console.warn;

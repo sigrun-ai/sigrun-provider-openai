@@ -15,5 +15,6 @@ export interface OpenAIProviderResult {
     readonly decisionProviders?: readonly DecisionProviderContribution[];
     readonly embeddingProviders?: readonly EmbeddingProviderContribution[];
 }
-/** Arity 1: sigrun supplies the scoped host; settings are read once at load. */
+/** Arity 1: sigrun supplies the scoped host; settings are declared once,
+ * then read through the checked handle (defaults applied, forms generated). */
 export default function createOpenAIProvider(host: OpenAIProviderHost): Promise<OpenAIProviderResult>;

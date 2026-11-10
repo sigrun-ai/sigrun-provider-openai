@@ -9,6 +9,7 @@ import { createOpenAIDecisions } from "./decisions.js";
 import { createOpenAIEmbeddings } from "./embeddings.js";
 import type { OpenAIProviderHost } from "./host.js";
 import { parseSettings } from "./settings.js";
+import { OPENAI_SETTINGS_JSON_SCHEMA } from "./settings-schema.js";
 
 export { createOpenAIChat } from "./chat.js";
 export { createOpenAIDecisions } from "./decisions.js";
@@ -36,12 +37,14 @@ export interface OpenAIProviderResult {
 	readonly embeddingProviders?: readonly EmbeddingProviderContribution[];
 }
 
-/** Arity 1: sigrun supplies the scoped host; settings are read once at load. */
+/** Arity 1: sigrun supplies the scoped host; settings are declared once,
+ * then read through the checked handle (defaults applied, forms generated). */
 export default async function createOpenAIProvider(
 	host: OpenAIProviderHost,
 ): Promise<OpenAIProviderResult> {
+	const declared = host.settings.declare({ schema: OPENAI_SETTINGS_JSON_SCHEMA });
 	const warn = (message: string) => console.warn(message);
-	const settings = parseSettings(await host.stores.settings.get(), warn);
+	const settings = parseSettings(await declared.get(), warn);
 	return {
 		name: "provider-openai",
 		providers: settings.chat.enabled ? [createOpenAIChat(settings.baseUrl)] : [],

@@ -6,10 +6,8 @@ import { DEFAULT_OPENAI_BASE_URL } from "../src/settings.js";
 
 function fakeHost(settings: Record<string, unknown>): OpenAIProviderHost {
 	return {
-		stores: {
-			settings: {
-				get: async () => settings,
-			},
+		settings: {
+			declare: () => ({ get: async () => settings }),
 		},
 	};
 }

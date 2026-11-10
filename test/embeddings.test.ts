@@ -16,10 +16,8 @@ const REQUEST_TOKEN_BUDGET = 300_000;
 
 function fakeHost(settings: Record<string, unknown>): OpenAIProviderHost {
 	return {
-		stores: {
-			settings: {
-				get: async () => settings,
-			},
+		settings: {
+			declare: () => ({ get: async () => settings }),
 		},
 	};
 }
