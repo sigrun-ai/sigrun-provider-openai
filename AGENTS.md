@@ -15,9 +15,13 @@ catalog, a decision provider, and an embedding provider — each switchable in
 
 - `src/index.ts` — async, host-taking factory and public exports; contributes
   only the kinds whose settings section is enabled.
-- `src/host.ts` — structural host slice (the async scoped settings store).
-- `src/settings.ts` — parser for `settings/provider-openai.json`; unknown or
-  malformed values warn and fall back per key.
+- `src/host.ts` — structural host slice (the settings-declaration handle).
+- `src/settings-schema.ts` — the JSON Schema declared via `host.settings.declare`
+  (core renders the generated settings form; every field is live).
+- `src/settings.ts` — normalizer over the CHECKED read: core applies defaults
+  and repairs malformed stored values; this module keeps the cross-field
+  degrade rules (unknown decision model ids dropped, invalid values fall
+  back — never a quarantine).
 - `src/chat.ts` — pi-ai OpenAI provider wrapper: chat-only catalog and per-request
   base URL applied through resolved auth.
 - `src/decisions.ts` — the decision provider: builds the OpenAI Decisions request
