@@ -7,10 +7,13 @@ export { createOpenAIEmbeddings, EMBEDDING_REQUEST_TOKEN_BUDGET, isLocalHost, } 
 export { createOpenAIReadiness } from "./readiness.js";
 export type { OpenAIReadiness } from "./readiness.js";
 export type { OpenAIProviderHost } from "./host.js";
-export { DEFAULT_DECISION_MODELS, DEFAULT_EMBEDDING_MAX_BATCH, DEFAULT_EMBEDDING_MODELS, DEFAULT_OPENAI_BASE_URL, parseSettings, } from "./settings.js";
-export type { OpenAIEmbeddingModelSettings, OpenAIProviderSettings } from "./settings.js";
+export { DEFAULT_EMBEDDING_MAX_BATCH, DEFAULT_OPENAI_BASE_URL, parseSettings, } from "./settings.js";
+export { KNOWN_EMBEDDING_MODELS } from "./known-models.js";
+export type { KnownEmbeddingModel } from "./known-models.js";
+export type { OpenAIProviderSettings } from "./settings.js";
 export interface OpenAIProviderResult {
     readonly name: "provider-openai";
+    readonly title: "OpenAI";
     readonly providers: readonly ProviderContribution[];
     readonly decisionProviders?: readonly DecisionProviderContribution[];
     readonly embeddingProviders?: readonly EmbeddingProviderContribution[];

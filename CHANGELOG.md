@@ -5,6 +5,21 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- No hand-maintained model lists (settings split): decisions publish every
+  pi-ai classifier catalog entry with api `openai-decisions`, and embeddings
+  publish the known models with their dimensions (`text-embedding-3-small`
+  1536, `text-embedding-3-large` 3072, `text-embedding-ada-002` 1536). Both
+  sets are fixed at load — no `/v1/models` intersection; an id the account
+  cannot use fails at call time, as before. The `decisions.models` and
+  `embeddings.models` settings keys are removed: an old settings file still
+  loads and its stored lists are unknown keys on core's Advanced pane.
+- The factory declares the display title `OpenAI` (core 0.15.0+).
+- The `@sigrun/sigrun` peer floor is `>=0.15.0` (the settings-split core).
+
 ## [0.1.1] - 2026-11-10
 
 ### Changed

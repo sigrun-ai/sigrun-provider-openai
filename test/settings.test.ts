@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { KNOWN_EMBEDDING_MODELS } from "../src/known-models.js";
 import {
+	DEFAULT_EMBEDDING_MAX_BATCH,
 	DEFAULT_OPENAI_BASE_URL,
 	parseSettings,
 } from "../src/settings.js";
@@ -10,44 +12,64 @@ describe("parseSettings", () => {
 		expect(parseSettings({}, (message) => warnings.push(message))).toEqual({
 			baseUrl: "https://api.openai.com/v1",
 			chat: { enabled: true },
-			decisions: { enabled: true, models: ["gpt-6-luna"] },
+			decisions: { enabled: true },
 			embeddings: {
 				enabled: true,
-				models: [
-					{ id: "text-embedding-3-small", dimensions: 1536 },
-					{ id: "text-embedding-3-large", dimensions: 3072 },
-				],
 				maxBatch: 2048,
 			},
 		});
 		expect(DEFAULT_OPENAI_BASE_URL).toBe("https://api.openai.com/v1");
+		expect(DEFAULT_EMBEDDING_MAX_BATCH).toBe(2048);
 		expect(warnings).toEqual([]);
 	});
 
 	it("warns about unknown keys at every settings level", () => {
 		const warnings: string[] = [];
-		const settings = parseSettings(
+		parseSettings(
 			{
 				unknown: true,
 				chat: { unknown: true },
 				decisions: { unknown: true },
-				embeddings: {
-					unknown: true,
-					models: [{ id: "embed-test", dimensions: 8, unknown: true }],
-				},
+				embeddings: { unknown: true },
 			},
 			(message) => warnings.push(message),
 		);
-		expect(settings.embeddings.models).toEqual([
-			{ id: "embed-test", dimensions: 8 },
-		]);
 		expect(warnings).toEqual([
 			"provider-openai: unknown settings key \"unknown\"; ignoring",
 			"provider-openai: unknown settings.chat key \"unknown\"; ignoring",
 			"provider-openai: unknown settings.decisions key \"unknown\"; ignoring",
 			"provider-openai: unknown settings.embeddings key \"unknown\"; ignoring",
-			"provider-openai: unknown settings.embeddings.models entry key \"unknown\"; ignoring",
 		]);
+	});
+
+	it("an old settings file still loads", () => {
+		// Pre-split files carried hand-maintained `models` lists in both the
+		// decisions and embeddings sections. Those keys are now unknown (core's
+		// Advanced pane lists them); the file must still load and the provider
+		// must offer the built-in sets.
+		const warnings: string[] = [];
+		const settings = parseSettings(
+			{
+				baseUrl: "https://api.openai.com/v1",
+				decisions: { models: ["gpt-6-luna", "gpt-other"] },
+				embeddings: {
+					models: [
+						{ id: "text-embedding-3-small", dimensions: 1536 },
+						{ id: "custom-embed", dimensions: 8 },
+					],
+					maxBatch: 512,
+				},
+			},
+			(message) => warnings.push(message),
+		);
+		expect(settings.decisions).toEqual({ enabled: true });
+		expect(settings.embeddings).toEqual({ enabled: true, maxBatch: 512 });
+		expect(warnings).toEqual([
+			"provider-openai: unknown settings.decisions key \"models\"; ignoring",
+			"provider-openai: unknown settings.embeddings key \"models\"; ignoring",
+		]);
+		// The published sets no longer come from the file at all.
+		expect(KNOWN_EMBEDDING_MODELS.map((model) => model.id)).toContain("text-embedding-3-small");
 	});
 
 	it("malformed settings warn and fall back per key", () => {
@@ -56,30 +78,18 @@ describe("parseSettings", () => {
 			{
 				baseUrl: 42,
 				chat: { enabled: "yes" },
-				decisions: { enabled: null, models: ["", "gpt-test", 42] },
-				embeddings: {
-					enabled: 1,
-					models: [
-						{ id: "", dimensions: 0 },
-						{ id: "embed-test", dimensions: 8 },
-						"bad",
-					],
-					maxBatch: 0,
-				},
+				decisions: { enabled: null },
+				embeddings: { enabled: 1, maxBatch: 0 },
 			},
 			(message) => warnings.push(message),
 		);
 		expect(settings).toEqual({
 			baseUrl: DEFAULT_OPENAI_BASE_URL,
 			chat: { enabled: true },
-			decisions: { enabled: true, models: ["gpt-test"] },
-			embeddings: {
-				enabled: true,
-				models: [{ id: "embed-test", dimensions: 8 }],
-				maxBatch: 2048,
-			},
+			decisions: { enabled: true },
+			embeddings: { enabled: true, maxBatch: 2048 },
 		});
-		expect(warnings.length).toBeGreaterThanOrEqual(7);
+		expect(warnings.length).toBeGreaterThanOrEqual(4);
 	});
 
 	it("malformed baseUrl warns and falls back to the default", () => {
@@ -89,16 +99,6 @@ describe("parseSettings", () => {
 		expect(warnings).toEqual(["provider-openai: settings.baseUrl is not a valid URL; using the default"]);
 	});
 
-	it("duplicate decisions.models entries are deduped with a warning", () => {
-		const warnings: string[] = [];
-		const settings = parseSettings(
-			{ decisions: { models: ["gpt-6-luna", "gpt-6-luna", "gpt-other"] } },
-			(message) => warnings.push(message),
-		);
-		expect(settings.decisions.models).toEqual(["gpt-6-luna", "gpt-other"]);
-		expect(warnings).toEqual(["provider-openai: settings.decisions.models dropped duplicate entries"]);
-	});
-
 	it("a settings section with the wrong shape uses its defaults", () => {
 		const warnings: string[] = [];
 		const settings = parseSettings(
@@ -106,7 +106,7 @@ describe("parseSettings", () => {
 			(message) => warnings.push(message),
 		);
 		expect(settings.chat).toEqual({ enabled: true });
-		expect(settings.decisions).toEqual({ enabled: true, models: ["gpt-6-luna"] });
+		expect(settings.decisions).toEqual({ enabled: true });
 		expect(settings.embeddings.enabled).toBe(true);
 		expect(warnings).toHaveLength(3);
 	});

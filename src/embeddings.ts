@@ -23,7 +23,7 @@ import type {
 	EmbeddingResponse,
 } from "@sigrun/sigrun/extension";
 import { createOpenAIReadiness } from "./readiness.js";
-import type { OpenAIEmbeddingModelSettings } from "./settings.js";
+import { KNOWN_EMBEDDING_MODELS } from "./known-models.js";
 
 /**
  * The message prefix for every error this module raises. Deliberately the
@@ -204,20 +204,20 @@ function parseVectors(payload: unknown, expected: number): number[][] {
 }
 
 /**
- * The embedding-provider contribution. `models` come from the scoped
- * settings; `local` is this provider's own view of the endpoint (a host
- * that is not a loopback or private address is never local, however the
- * admin lists it). `embed` throws for transport, response and configuration
- * failures; core maps a throw to `failed`.
+ * The embedding-provider contribution. `models` are KNOWN_EMBEDDING_MODELS
+ * (fixed at load; a stored settings list is an unknown key). `local` is this
+ * provider's own view of the endpoint (a host that is not a loopback or
+ * private address is never local, however the admin lists it). `embed`
+ * throws for transport, response and configuration failures; core maps a
+ * throw to `failed`.
  */
 export function createOpenAIEmbeddings(
 	baseUrl: string,
-	models: readonly OpenAIEmbeddingModelSettings[],
 	maxBatch: number,
 ): EmbeddingProviderContribution {
 	const readiness = createOpenAIReadiness(baseUrl);
 	const local = isLocalHost(new URL(baseUrl).hostname);
-	const catalog: EmbeddingModelInfo[] = models.map((model) => ({
+	const catalog: EmbeddingModelInfo[] = KNOWN_EMBEDDING_MODELS.map((model) => ({
 		id: model.id,
 		dimensions: model.dimensions,
 		maxBatch,

@@ -19,29 +19,22 @@ function isRecord(value) {
 function text(value) {
     return typeof value === "string" ? value : JSON.stringify(value);
 }
-/** One classifier catalog entry per configured model, with the settings baseUrl laid over it. */
-function classifierModels(baseUrl, models, warn) {
+/**
+ * Every pi-ai classifier catalog entry with api "openai-decisions", with the
+ * settings baseUrl laid over each. The set is fixed at load (plan 3 Task 1):
+ * core's decision contribution has no refresh hook, so the full catalog is
+ * published rather than intersected with `GET /v1/models`; an id the account
+ * cannot use fails at call time. The old `decisions.models` settings key is
+ * gone — a stored list is an unknown key on core's Advanced pane.
+ */
+function classifierModels(baseUrl) {
     const base = openaiProvider();
     const catalog = (base.getAllModels?.() ?? base.getModels()).filter((model) => isModelType(model, "classifier") && model.api === "openai-decisions");
-    const byId = new Map(catalog.map((model) => [model.id, model]));
-    const usable = [];
-    for (const id of models) {
-        if (byId.has(id)) {
-            usable.push(id);
-        }
-        else {
-            warn(`provider-openai: no OpenAI Decisions classifier catalog entry for "${id}"; dropping it`);
-        }
-    }
-    const ids = usable.length > 0 ? usable : catalog.map((model) => model.id);
-    if (usable.length === 0) {
-        warn("provider-openai: settings.decisions.models named no usable classifier model; using the default");
-    }
     const result = new Map();
-    for (const id of ids) {
+    for (const model of catalog) {
         // postClassifierRequest posts to an explicit URL built like pi-ai's classify:
         // new URL("decisions", `${baseUrl without trailing slashes}/`).
-        result.set(id, { ...byId.get(id), baseUrl });
+        result.set(model.id, { ...model, baseUrl });
     }
     return result;
 }
@@ -161,8 +154,8 @@ function parseAnswers(body, request, model) {
  * `degraded` until a success. `evaluate` throws for transport and answer
  * failures; core maps a throw to `failed`.
  */
-export function createOpenAIDecisions(baseUrl, models, warn = () => { }) {
-    const catalog = classifierModels(baseUrl, models, warn);
+export function createOpenAIDecisions(baseUrl) {
+    const catalog = classifierModels(baseUrl);
     // The shared three-state tracker (spec §3): every kind reports readiness
     // the same way, including the display-only gap before the first call.
     const readiness = createOpenAIReadiness(baseUrl);

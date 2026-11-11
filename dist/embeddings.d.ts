@@ -16,7 +16,6 @@
  * body is truncated to a short snippet with both scrubbed out.
  */
 import type { EmbeddingProviderContribution } from "@sigrun/sigrun/extension";
-import type { OpenAIEmbeddingModelSettings } from "./settings.js";
 /** The endpoint's per-request token ceiling, in ESTIMATED tokens. */
 export declare const EMBEDDING_REQUEST_TOKEN_BUDGET = 300000;
 /**
@@ -27,10 +26,11 @@ export declare const EMBEDDING_REQUEST_TOKEN_BUDGET = 300000;
  */
 export declare function isLocalHost(hostname: string): boolean;
 /**
- * The embedding-provider contribution. `models` come from the scoped
- * settings; `local` is this provider's own view of the endpoint (a host
- * that is not a loopback or private address is never local, however the
- * admin lists it). `embed` throws for transport, response and configuration
- * failures; core maps a throw to `failed`.
+ * The embedding-provider contribution. `models` are KNOWN_EMBEDDING_MODELS
+ * (fixed at load; a stored settings list is an unknown key). `local` is this
+ * provider's own view of the endpoint (a host that is not a loopback or
+ * private address is never local, however the admin lists it). `embed`
+ * throws for transport, response and configuration failures; core maps a
+ * throw to `failed`.
  */
-export declare function createOpenAIEmbeddings(baseUrl: string, models: readonly OpenAIEmbeddingModelSettings[], maxBatch: number): EmbeddingProviderContribution;
+export declare function createOpenAIEmbeddings(baseUrl: string, maxBatch: number): EmbeddingProviderContribution;
