@@ -304,26 +304,22 @@ describe("provider-openai decisions", () => {
 		}, ctx())).rejects.toThrow("openai refused question dangerous");
 	});
 
-	it("unknown decisions.models ids degrade with a warning and keep chat", async () => {
+	it("every catalog model is published, independent of settings", async () => {
+		// The catalog is fixed at load: no /v1/models intersection and no
+		// settings-driven filter. A stored `models` key is an unknown key.
 		const warnings: string[] = [];
-		const host: OpenAIProviderHost = {
-			settings: {
-				declare: () => ({
-					get: async () => ({
-						decisions: { models: ["not-a-classifier-model"] },
-					}),
-				}),
-			},
-		};
 		const originalWarn = console.warn;
 		console.warn = (message: string) => warnings.push(message);
 		try {
-			const result = await createOpenAIProvider(host);
+			const result = await createOpenAIProvider(fakeHost({
+				decisions: { models: ["not-a-classifier-model"] },
+			}));
 			expect(result.providers).toHaveLength(1);
 			const contribution = result.decisionProviders?.[0];
 			expect(contribution?.models).toEqual([{ id: "gpt-6-luna" }]);
-			expect(warnings.some((message) => message.includes("not-a-classifier-model"))).toBe(true);
-			expect(warnings.some((message) => message.includes("no usable classifier model"))).toBe(true);
+			expect(warnings).toEqual([
+				"provider-openai: unknown settings.decisions key \"models\"; ignoring",
+			]);
 		} finally {
 			console.warn = originalWarn;
 		}

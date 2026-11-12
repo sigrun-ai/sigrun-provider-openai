@@ -19,13 +19,17 @@ catalog, a decision provider, and an embedding provider — each switchable in
 - `src/settings-schema.ts` — the JSON Schema declared via `host.settings.declare`
   (core renders the generated settings form; every field is live).
 - `src/settings.ts` — normalizer over the CHECKED read: core applies defaults
-  and repairs malformed stored values; this module keeps the cross-field
-  degrade rules (unknown decision model ids dropped, invalid values fall
-  back — never a quarantine).
+  and repairs malformed stored values; invalid values fall back per key —
+  never a quarantine. Model sets are NOT settings (settings split): stored
+  `models` lists are unknown keys here.
+- `src/known-models.ts` — KNOWN_EMBEDDING_MODELS (id + dimensions), the fixed
+  embedding catalog.
 - `src/chat.ts` — pi-ai OpenAI provider wrapper: chat-only catalog and per-request
   base URL applied through resolved auth.
-- `src/decisions.ts` — the decision provider: builds the OpenAI Decisions request
-  body and posts it through pi-ai's transport, parsing answers locally.
+- `src/decisions.ts` — the decision provider: publishes every pi-ai classifier
+  catalog entry with api `openai-decisions` (fixed at load), builds the OpenAI
+  Decisions request body and posts it through pi-ai's transport, parsing
+  answers locally.
 - `src/embeddings.ts` — the embedding provider: `POST <baseUrl>/embeddings`,
   split by input count and by an estimated token budget, index-ordered vectors,
   scrubbed failures, plus `isLocalHost` (the per-model `local` report).

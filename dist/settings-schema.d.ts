@@ -47,19 +47,6 @@ export declare const OPENAI_SETTINGS_JSON_SCHEMA: {
                     readonly title: string;
                     readonly description: string;
                 };
-                readonly models: {
-                    readonly "x-sigrun-apply": "live";
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "string";
-                        readonly minLength: 1;
-                    };
-                    readonly uniqueItems: true;
-                    readonly minItems: 1;
-                    readonly default: readonly ["gpt-6-luna"];
-                    readonly title: "Decision models";
-                    readonly description: "Model ids offered for decisions (unrecognized ids are dropped with a warning).";
-                };
             };
             readonly default: {};
         };
@@ -73,38 +60,6 @@ export declare const OPENAI_SETTINGS_JSON_SCHEMA: {
                     readonly default: true;
                     readonly title: string;
                     readonly description: string;
-                };
-                readonly models: {
-                    readonly "x-sigrun-apply": "live";
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "object";
-                        readonly properties: {
-                            readonly id: {
-                                readonly type: "string";
-                                readonly minLength: 1;
-                                readonly title: "Model id";
-                            };
-                            readonly dimensions: {
-                                readonly type: "integer";
-                                readonly minimum: 1;
-                                readonly title: "Dimensions";
-                                readonly description: "The vector length the model returns.";
-                            };
-                        };
-                        readonly required: readonly ["id", "dimensions"];
-                        readonly "x-sigrun-key": "id";
-                        readonly "x-sigrun-summary": readonly ["id", "dimensions"];
-                    };
-                    readonly default: readonly [{
-                        readonly id: "text-embedding-3-small";
-                        readonly dimensions: 1536;
-                    }, {
-                        readonly id: "text-embedding-3-large";
-                        readonly dimensions: 3072;
-                    }];
-                    readonly title: "Embedding models";
-                    readonly description: "The embedding models to offer (provider/model ids on the embedding surface).";
                 };
                 readonly maxBatch: {
                     readonly "x-sigrun-apply": "live";

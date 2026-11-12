@@ -48,6 +48,7 @@
 	},
 	"peerDependencies": {
 		"@earendil-works/pi-ai": "*",
-		"@earendil-works/pi-durable": "*"
+		"@earendil-works/pi-durable": "*",
+		"@sigrun/sigrun": ">=0.15.0"
 	}
 }

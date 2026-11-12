@@ -1,21 +1,14 @@
 /**
  * Scoped settings for settings/provider-openai.json. Invalid or unknown keys
  * warn and fall back per key; malformed settings never quarantine the plugin.
+ *
+ * Settings split (plan 3 Task 1): the model sets are no longer settings.
+ * Decisions publish pi-ai's classifier catalog and embeddings publish
+ * KNOWN_EMBEDDING_MODELS, both fixed at load; a stored `models` list in
+ * either section is an unknown key here (core's Advanced pane lists it).
  */
 export declare const DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1";
-export declare const DEFAULT_DECISION_MODELS: readonly ["gpt-6-luna"];
-export declare const DEFAULT_EMBEDDING_MODELS: readonly [{
-    readonly id: "text-embedding-3-small";
-    readonly dimensions: 1536;
-}, {
-    readonly id: "text-embedding-3-large";
-    readonly dimensions: 3072;
-}];
 export declare const DEFAULT_EMBEDDING_MAX_BATCH = 2048;
-export interface OpenAIEmbeddingModelSettings {
-    readonly id: string;
-    readonly dimensions: number;
-}
 export interface OpenAIProviderSettings {
     readonly baseUrl: string;
     readonly chat: {
@@ -23,11 +16,9 @@ export interface OpenAIProviderSettings {
     };
     readonly decisions: {
         readonly enabled: boolean;
-        readonly models: readonly string[];
     };
     readonly embeddings: {
         readonly enabled: boolean;
-        readonly models: readonly OpenAIEmbeddingModelSettings[];
         readonly maxBatch: number;
     };
 }

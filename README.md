@@ -37,10 +37,16 @@ when the extension loads; restart sigrun after editing it.
 | `baseUrl` | `https://api.openai.com/v1` | OpenAI-compatible API root |
 | `chat.enabled` | `true` | Contribute OpenAI chat models |
 | `decisions.enabled` | `true` | Contribute the decision provider |
-| `decisions.models` | `["gpt-6-luna"]` | Decision model ids |
 | `embeddings.enabled` | `true` | Contribute the embedding provider |
-| `embeddings.models` | `[{id: "text-embedding-3-small", dimensions: 1536}, {id: "text-embedding-3-large", dimensions: 3072}]` | Embedding model ids and vector dimensions |
 | `embeddings.maxBatch` | `2048` | Maximum inputs per embedding request |
+
+The model sets are not settings: decisions publish every pi-ai classifier
+catalog entry with api `openai-decisions`, and embeddings publish the known
+models (`text-embedding-3-small` 1536, `text-embedding-3-large` 3072,
+`text-embedding-ada-002` 1536). Both sets are fixed at load; an id the
+account cannot use fails at call time. A stored `decisions.models` or
+`embeddings.models` list from an older install is an unknown key (listed on
+the Advanced pane) and no longer changes what is offered.
 
 Unknown or malformed settings warn and fall back per key. The default `baseUrl`
 is passed through unchanged; do not add or remove a trailing slash when using
@@ -49,9 +55,9 @@ pi-ai's OpenAI subscription-auth behavior.
 ## Provider kinds
 
 - **Chat:** pi-ai's OpenAI Responses provider, model catalog included.
-- **Decisions:** one provider per configured model, posted to
+- **Decisions:** the classifier catalog, posted to
   `POST <baseUrl>/decisions`.
-- **Embeddings:** one provider with every configured model. Each request is
+- **Embeddings:** one provider with every known model. Each request is
   split so it holds at most `embeddings.maxBatch` inputs and stays within the
   endpoint's per-request token ceiling (estimated at four characters per
   token); vectors return in input order. Each model reports `local` when

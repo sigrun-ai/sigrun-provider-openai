@@ -131,6 +131,7 @@ describe("provider-openai embeddings", () => {
 		expect(contribution.models).toEqual([
 			{ id: "text-embedding-3-small", dimensions: 1536, maxBatch: 2048, local: false },
 			{ id: "text-embedding-3-large", dimensions: 3072, maxBatch: 2048, local: false },
+			{ id: "text-embedding-ada-002", dimensions: 1536, maxBatch: 2048, local: false },
 		]);
 	});
 
@@ -166,7 +167,7 @@ describe("provider-openai embeddings", () => {
 			expect(
 				contribution.models.map((model) => model.local),
 				baseUrl,
-			).toEqual([true, true]);
+			).toEqual([true, true, true]);
 		}
 		for (const baseUrl of [
 			"https://api.openai.com/v1",
@@ -177,7 +178,7 @@ describe("provider-openai embeddings", () => {
 			expect(
 				contribution.models.map((model) => model.local),
 				baseUrl,
-			).toEqual([false, false]);
+			).toEqual([false, false, false]);
 		}
 
 		// The class predicate itself, including IPv4-mapped IPv6.
@@ -359,12 +360,14 @@ describe("provider-openai embeddings", () => {
 		expect(contribution.readiness?.()).toEqual({ status: "not_configured" });
 	});
 
-	it("settings models and maxBatch reach the contribution", async () => {
+	it("maxBatch reaches the contribution; a stored models list is an unknown key", async () => {
 		const contribution = await contributionFor({
 			embeddings: { models: [{ id: "custom-embed", dimensions: 8 }], maxBatch: 3 },
 		});
 		expect(contribution.models).toEqual([
-			{ id: "custom-embed", dimensions: 8, maxBatch: 3, local: false },
+			{ id: "text-embedding-3-small", dimensions: 1536, maxBatch: 3, local: false },
+			{ id: "text-embedding-3-large", dimensions: 3072, maxBatch: 3, local: false },
+			{ id: "text-embedding-ada-002", dimensions: 1536, maxBatch: 3, local: false },
 		]);
 	});
 

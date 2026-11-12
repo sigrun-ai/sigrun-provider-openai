@@ -42,16 +42,6 @@ export const OPENAI_SETTINGS_JSON_SCHEMA = {
             type: "object",
             properties: {
                 enabled: onOff("Decisions enabled", "Contribute the OpenAI decision provider (/v1/decisions)."),
-                models: {
-                    type: "array",
-                    items: { type: "string", minLength: 1 },
-                    uniqueItems: true,
-                    minItems: 1,
-                    default: ["gpt-6-luna"],
-                    title: "Decision models",
-                    description: "Model ids offered for decisions (unrecognized ids are dropped with a warning).",
-                    ...live,
-                },
             },
             default: {},
             ...live,
@@ -60,31 +50,6 @@ export const OPENAI_SETTINGS_JSON_SCHEMA = {
             type: "object",
             properties: {
                 enabled: onOff("Embeddings enabled", "Contribute the OpenAI embedding provider (/v1/embeddings)."),
-                models: {
-                    type: "array",
-                    items: {
-                        type: "object",
-                        properties: {
-                            id: { type: "string", minLength: 1, title: "Model id" },
-                            dimensions: {
-                                type: "integer",
-                                minimum: 1,
-                                title: "Dimensions",
-                                description: "The vector length the model returns.",
-                            },
-                        },
-                        required: ["id", "dimensions"],
-                        "x-sigrun-key": "id",
-                        "x-sigrun-summary": ["id", "dimensions"],
-                    },
-                    default: [
-                        { id: "text-embedding-3-small", dimensions: 1536 },
-                        { id: "text-embedding-3-large", dimensions: 3072 },
-                    ],
-                    title: "Embedding models",
-                    description: "The embedding models to offer (provider/model ids on the embedding surface).",
-                    ...live,
-                },
                 maxBatch: {
                     type: "integer",
                     minimum: 1,

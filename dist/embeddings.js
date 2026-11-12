@@ -1,4 +1,5 @@
 import { createOpenAIReadiness } from "./readiness.js";
+import { KNOWN_EMBEDDING_MODELS } from "./known-models.js";
 /**
  * The message prefix for every error this module raises. Deliberately the
  * plugin's own name rather than the vendor's: these strings reach operators
@@ -169,16 +170,17 @@ function parseVectors(payload, expected) {
     return vectors;
 }
 /**
- * The embedding-provider contribution. `models` come from the scoped
- * settings; `local` is this provider's own view of the endpoint (a host
- * that is not a loopback or private address is never local, however the
- * admin lists it). `embed` throws for transport, response and configuration
- * failures; core maps a throw to `failed`.
+ * The embedding-provider contribution. `models` are KNOWN_EMBEDDING_MODELS
+ * (fixed at load; a stored settings list is an unknown key). `local` is this
+ * provider's own view of the endpoint (a host that is not a loopback or
+ * private address is never local, however the admin lists it). `embed`
+ * throws for transport, response and configuration failures; core maps a
+ * throw to `failed`.
  */
-export function createOpenAIEmbeddings(baseUrl, models, maxBatch) {
+export function createOpenAIEmbeddings(baseUrl, maxBatch) {
     const readiness = createOpenAIReadiness(baseUrl);
     const local = isLocalHost(new URL(baseUrl).hostname);
-    const catalog = models.map((model) => ({
+    const catalog = KNOWN_EMBEDDING_MODELS.map((model) => ({
         id: model.id,
         dimensions: model.dimensions,
         maxBatch,
