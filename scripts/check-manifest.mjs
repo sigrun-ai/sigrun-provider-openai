@@ -62,7 +62,7 @@ check(typeof manifest.bugs?.url === "string", "package.json: bugs.url absent");
 check(typeof manifest.homepage === "string", "package.json: homepage absent");
 
 /** Every host module a sigrun extension/provider imports must be a peer.
- * Peers accept any host version; development pins the 1.5.0 family exactly,
+ * Peers accept any host version; development pins the 1.6.0 family exactly,
  * keeping one type-compatible copy of pi-ai/pi-durable.
  * typebox is pi-ai's own exact dependency (1.3.27) — the
  * host-linked single copy extensions see. */
@@ -73,12 +73,12 @@ const HOST_MODULE_PINS = {
 	"@earendil-works/pi-codemode": "*",
 	typebox: "*",
 };
-/** Development happens against pi-durable 1.5.0 (exact). */
+/** Development happens against pi-durable 1.6.0 (exact). */
 const DEV_PIN_OVERRIDES = {
-	"@earendil-works/chord": "1.5.0",
-	"@earendil-works/pi-ai": "1.5.0",
-	"@earendil-works/pi-codemode": "1.5.0",
-	"@earendil-works/pi-durable": "1.5.0",
+	"@earendil-works/chord": "1.6.0",
+	"@earendil-works/pi-ai": "1.6.0",
+	"@earendil-works/pi-codemode": "1.6.0",
+	"@earendil-works/pi-durable": "1.6.0",
 };
 /**
  * `@sigrun/sigrun` is the host the declared-settings contract comes from:
